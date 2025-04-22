@@ -1,0 +1,13 @@
+<app-navbar></app-navbar>
+<div class="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+  <div class="max-w-md w-full space-y-8">
+    <h2 class="text-center text-3xl font-extrabold text-gray-900">User Dashboard</h2>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <p class="text-lg text-gray-700">Welcome, {{ userEmail }}!</p>
+      <p class="mt-4 text-md text-gray-600">This is your personal dashboard.</p>
+      <button (click)="logout()" class="mt-6 w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
