@@ -11,6 +11,10 @@ interface LoginResponse {
   id: number;
 }
 
+interface RegisterResponse {
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,6 +38,10 @@ export class AuthService {
           this.isAuthenticatedSubject.next(true);
         })
       );
+  }
+
+  register(formData: FormData): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.API_URL}/register`, formData);
   }
 
   logout(): void {
