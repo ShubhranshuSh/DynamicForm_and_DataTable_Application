@@ -171,3 +171,30 @@ def register():
         return jsonify({"message": f"Error registering user: {str(e)}"}), 500
 
     return jsonify({"message": "User registered successfully."}), 201
+
+@app.route('/user/<int:user_id>/dashboard', methods=['GET'])
+@auth_required('token')
+@user_required
+def user_dashboard(user_id):
+    # Ensure current user can only access their own dashboard
+    if current_user.id != user_id:
+        return jsonify({"message": "Unauthorized access."}), 403
+
+    user_data = {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "uid": current_user.uid,
+        "phone": current_user.phone,
+        "address": current_user.address,
+        "height": current_user.height,
+        "weight": current_user.weight,
+        "blood_group": current_user.blood_group,
+        "emergency_contact": current_user.emergency_contact,
+        "allergies": current_user.allergies,
+        "notes": current_user.notes,
+        "profile_picture": current_user.profile_picture,
+        "roles": [role.name for role in current_user.roles]
+    }
+
+    return jsonify({"message": "Dashboard data fetched successfully.", "user": user_data}), 200
