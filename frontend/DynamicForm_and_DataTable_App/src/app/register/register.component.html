@@ -9,72 +9,122 @@
       
       <form class="mt-8 space-y-4" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input 
-            type="text" 
-            placeholder="Name *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="name"
-            required />
-          <input 
-            type="email" 
-            placeholder="Email *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="email"
-            required />
-          <input 
-            type="password" 
-            placeholder="Password *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="password"
-            required />
-          <input 
-            type="text" 
-            placeholder="UID *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="uid"
-            required />
-          <input 
-            type="text" 
-            placeholder="Phone *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="phone"
-            required />
+          <div>
+            <input 
+              type="text" 
+              placeholder="Name *" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="name"
+              required />
+            <div *ngIf="validationErrors['name']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['name'] }}
+            </div>
+          </div>
+          
+          <div>
+            <input 
+              type="email" 
+              placeholder="Email *" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="email"
+              required />
+            <div *ngIf="validationErrors['email']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['email'] }}
+            </div>
+          </div>
+          
+          <div>
+            <input 
+              type="password" 
+              placeholder="Password *" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="password"
+              required />
+            <div *ngIf="validationErrors['password']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['password'] }}
+            </div>
+          </div>
+          
+          <div>
+            <input 
+              type="text" 
+              placeholder="UID * (11 digits)" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="uid"
+              required />
+            <div *ngIf="validationErrors['uid']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['uid'] }}
+            </div>
+          </div>
+          
+          <div>
+            <input 
+              type="text" 
+              placeholder="Phone * (10 digits)" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="phone"
+              required />
+            <div *ngIf="validationErrors['phone']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['phone'] }}
+            </div>
+          </div>
+          
           <input 
             type="text" 
             placeholder="Address" 
             class="px-4 py-2 border rounded-lg" 
             formControlName="address" />
+          
           <input 
             type="text" 
             placeholder="Height" 
             class="px-4 py-2 border rounded-lg" 
             formControlName="height" />
+          
           <input 
             type="text" 
             placeholder="Weight" 
             class="px-4 py-2 border rounded-lg" 
             formControlName="weight" />
-          <input 
-            type="text" 
-            placeholder="Blood Group" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="blood_group" />
-          <input 
-            type="text" 
-            placeholder="Emergency Contact *" 
-            class="px-4 py-2 border rounded-lg" 
-            formControlName="emergency_contact"
-            required />
+          
+          <select
+            class="px-4 py-2 border rounded-lg"
+            formControlName="blood_group">
+            <option value="">Select Blood Group</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+          
+          <div>
+            <input 
+              type="text" 
+              placeholder="Emergency Contact * (10 digits)" 
+              class="px-4 py-2 border rounded-lg w-full" 
+              formControlName="emergency_contact"
+              required />
+            <div *ngIf="validationErrors['emergency_contact']" class="text-red-500 text-xs mt-1">
+              {{ validationErrors['emergency_contact'] }}
+            </div>
+          </div>
+          
           <input 
             type="text" 
             placeholder="Allergies" 
             class="px-4 py-2 border rounded-lg" 
             formControlName="allergies" />
+          
           <input 
             type="text" 
             placeholder="Notes" 
             class="px-4 py-2 border rounded-lg" 
             formControlName="notes" />
+          
           <div class="md:col-span-2">
             <label class="block mb-1 text-sm text-gray-600">Profile Picture</label>
             <input 
@@ -83,10 +133,10 @@
               (change)="onFileChange($event)" />
           </div>
         </div>
+        
         <button 
           type="submit" 
-          class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 mt-4"
-          [disabled]="registerForm.invalid || loading">
+          class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 mt-4">
           {{ loading ? 'Registering...' : 'Register' }}
         </button>
       </form>

@@ -17,6 +17,9 @@ export class RegisterComponent implements OnInit {
   errorMessage: string = '';
   loading: boolean = false;
   selectedFile: File | null = null;
+  
+  // Add validation error flags
+  validationErrors: { [key: string]: string } = {};
 
   constructor(
     private formBuilder: FormBuilder,
@@ -29,13 +32,13 @@ export class RegisterComponent implements OnInit {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
-      uid: ['', Validators.required],
-      phone: ['', Validators.required],
+      uid: ['', [Validators.required, Validators.pattern('^[0-9]{11}$')]],
+      phone: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
       address: [''],
       height: [''],
       weight: [''],
       blood_group: [''],
-      emergency_contact: ['', Validators.required],
+      emergency_contact: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
       allergies: [''],
       notes: [''],
       profile_picture: ['']
@@ -53,13 +56,52 @@ export class RegisterComponent implements OnInit {
     }
   }
 
+  validateField(fieldName: string, errorMessage: string): boolean {
+    const control = this.registerForm.get(fieldName);
+    if (control?.invalid && (control.dirty || control.touched)) {
+      this.validationErrors[fieldName] = errorMessage;
+      return false;
+    }
+    delete this.validationErrors[fieldName];
+    return true;
+  }
+
+  validateForm(): boolean {
+    let isValid = true;
+    
+    // Validate required fields
+    if (!this.validateField('name', 'Name is required')) isValid = false;
+    if (!this.validateField('email', 'Valid email is required')) isValid = false;
+    if (!this.validateField('password', 'Password is required')) isValid = false;
+    
+    // Validate phone number - must be 10 digits
+    if (!this.validateField('phone', 'Phone number must be exactly 10 digits')) isValid = false;
+    
+    // Validate UID - must be 11 digits
+    if (!this.validateField('uid', 'UID must be exactly 11 digits')) isValid = false;
+    
+    // Validate emergency contact - must be 10 digits
+    if (!this.validateField('emergency_contact', 'Emergency contact must be exactly 10 digits')) isValid = false;
+    
+    return isValid;
+  }
+
   onSubmit(): void {
+    // Mark all fields as touched to trigger validation
+    Object.keys(this.registerForm.controls).forEach(key => {
+      const control = this.registerForm.get(key);
+      control?.markAsTouched();
+    });
+
     if (this.registerForm.invalid) {
+      this.validateForm();
+      this.errorMessage = 'Please fix the errors in the form';
       return;
     }
 
     this.loading = true;
     this.errorMessage = '';
+    this.validationErrors = {};
 
     // Create FormData for file upload
     const formData = new FormData();

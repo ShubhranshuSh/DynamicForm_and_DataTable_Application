@@ -112,32 +112,39 @@ def register():
     allergies = data.get('allergies')
     notes = data.get('notes')
 
-    # Handle profile picture upload
     profile_picture = request.files.get('profile_picture')
     if profile_picture and allowed_file(profile_picture.filename):
-        # Save the file securely
         picture_filename = secure_filename(profile_picture.filename)
         picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
         profile_picture.save(picture_path)
     else:
-        picture_path = None  # No file uploaded or file type not allowed
+        picture_path = None
 
-    # Validate required fields
+    # Basic field check
     if not all([name, email, password, uid, phone, emergency_contact]):
         return jsonify({"message": "Required fields: name, email, password, uid, phone, emergency_contact."}), 400
 
-    # Check if user already exists
+    # Validation logic
+    if not phone.isdigit() or len(phone) != 10:
+        return jsonify({"message": "Phone number must be exactly 10 digits."}), 400
+    if not uid.isdigit() or len(uid) != 11:
+        return jsonify({"message": "UID must be exactly 11 digits."}), 400
+    if not emergency_contact.isdigit() or len(emergency_contact) != 10:
+        return jsonify({"message": "Emergency contact must be exactly 10 digits."}), 400
+    import re
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({"message": "Invalid email format."}), 400
+
+    # Check duplicates
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "User with this email already exists."}), 409
     if User.query.filter_by(uid=uid).first():
         return jsonify({"message": "User with this UID already exists."}), 409
 
-    # Find the 'user' role
     user_role = Role.query.filter_by(name='user').first()
     if not user_role:
         return jsonify({"message": "User role not found. Contact administrator."}), 500
 
-    # Create new user with 'user' role
     user = User(
         name=name,
         email=email,
@@ -152,11 +159,10 @@ def register():
         allergies=allergies,
         notes=notes,
         fs_uniquifier=str(uuid.uuid4()),
-        roles=[user_role],  # Automatically assign 'user' role
-        profile_picture=picture_path  # Save profile picture path if available
+        roles=[user_role],
+        profile_picture=picture_path
     )
-    
-    # Add user to datastore and commit to database
+
     try:
         db.session.add(user)
         db.session.commit()
