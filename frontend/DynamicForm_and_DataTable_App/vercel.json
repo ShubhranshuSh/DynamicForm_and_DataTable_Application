@@ -10,7 +10,7 @@
       },
       {
         "source": "/(.*)",
-        "destination": "frontend/DynamicForm_and_DataTable_App/src/index.html"
+        "destination": "/index.html"
       }
     ],
     "headers": [
