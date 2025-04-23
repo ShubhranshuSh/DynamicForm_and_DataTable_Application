@@ -39,9 +39,9 @@ export class AuthService {
   private API_URL = 'http://localhost:5000'; // Adjust to your Flask backend URL
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated = this.isAuthenticatedSubject.asObservable();
-
+  
   constructor(private http: HttpClient, private router: Router) {}
-
+  
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, { email, password })
       .pipe(
@@ -56,60 +56,32 @@ export class AuthService {
         })
       );
   }
-
+  
   register(formData: FormData): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.API_URL}/register`, formData);
   }
-
+  
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.isAuthenticatedSubject.next(false);
     this.router.navigate(['/login']);
   }
-
+  
   getCurrentUser(): any {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   }
-
+  
   getToken(): string | null {
     return localStorage.getItem('token');
   }
-
+  
   getUserDashboard(userId: number): Observable<any> {
     return this.http.get(`${this.API_URL}/user/${userId}/dashboard`);
   }
-
+  
   private hasToken(): boolean {
     return !!localStorage.getItem('token');
-  }
-  
-  getApiUrl(): string {
-    return this.API_URL;
-  }
-  
-  getProfileImageUrl(imagePath: string): string {
-    if (!imagePath) return '';
-    
-    // If it's already a full URL, return it
-    if (imagePath.startsWith('http')) return imagePath;
-    
-    // Handle paths that might include uploads/profile_pics
-    if (imagePath.includes('uploads/profile_pics/')) {
-      // Already contains the full path, we just need to prepend API URL
-      return `${this.API_URL}/${imagePath}`;
-    }
-    
-    // Handle paths that include just directories without 'uploads/profile_pics'
-    if (imagePath.includes('/')) {
-      // Extract filename from path
-      const parts = imagePath.split('/');
-      const filename = parts[parts.length - 1];
-      return `${this.API_URL}/uploads/profile_pics/${filename}`;
-    }
-    
-    // It's just a filename
-    return `${this.API_URL}/uploads/profile_pics/${imagePath}`;
   }
 }

@@ -74,9 +74,15 @@ export class EditUserComponent implements OnInit {
         
         // Handle profile picture
         if (data.user.profile_picture) {
-          this.previewUrl = this.authService.getProfileImageUrl(data.user.profile_picture);
+          // If the profile picture is a relative path, prepend the API URL
+          if (data.user.profile_picture.startsWith('uploads/')) {
+            this.previewUrl = `http://localhost:5000/${data.user.profile_picture}`;
+          } else {
+            this.previewUrl = data.user.profile_picture;
+          }
           this.originalProfilePicture = data.user.profile_picture;
         }
+        
         this.loading = false;
       },
       error: (error) => {
@@ -100,14 +106,17 @@ export class EditUserComponent implements OnInit {
         this.error = 'Only JPG, JPEG and PNG files are allowed.';
         return;
       }
+      
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         this.error = 'File size should not exceed 2MB.';
         return;
       }
+      
       this.selectedFile = file;
       this.removeProfilePicFlag = false;
       this.error = ''; // Clear any previous errors
+      
       // Create preview
       const reader = new FileReader();
       reader.onload = () => {
@@ -143,13 +152,14 @@ export class EditUserComponent implements OnInit {
     }
 
     const formData = new FormData();
+    
     // Add all form fields to FormData
     Object.entries(this.editForm.value).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     });
-
+    
     // Handle profile picture
     if (this.selectedFile) {
       formData.append('profile_picture', this.selectedFile);
@@ -159,11 +169,13 @@ export class EditUserComponent implements OnInit {
     }
 
     this.loading = true;
-    this.http.post<any>(`${this.authService.getApiUrl()}/user/${this.userId}/dashboard/edit`, formData).subscribe({
+    
+    this.http.post<any>(`http://localhost:5000/user/${this.userId}/dashboard/edit`, formData).subscribe({
       next: (response) => {
         this.success = 'Profile updated successfully!';
         this.error = '';
         this.loading = false;
+        
         // Redirect after short delay to show success message
         setTimeout(() => {
           this.router.navigate(['/user', this.userId, 'dashboard']);

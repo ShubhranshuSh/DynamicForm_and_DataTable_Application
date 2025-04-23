@@ -30,14 +30,13 @@ interface UserDetails {
 })
 export class UserDashboardComponent implements OnInit {
   userId: number = 0;
-  userEmail: string = '';
+  userEmail: string = ''; // ✅ ADDED FOR EMAIL DISPLAY
   userDetails: UserDetails | null = null;
   loading: boolean = true;
   error: string = '';
-  user: any = null;
-
+  
   constructor(
-    public authService: AuthService,  // Changed to public for template access
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -45,9 +44,10 @@ export class UserDashboardComponent implements OnInit {
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
-      this.userEmail = user.email;
-      this.userId = user.id;
+      this.userEmail = user.email;        // ✅ ADDED TO SHOW EMAIL
+      this.userId = user.id;              // ✅ ADDED TO SET userId
     }
+
     this.route.paramMap.subscribe(params => {
       const urlId = parseInt(params.get('id') || '0', 10);
       if (urlId !== this.userId) {
@@ -64,7 +64,6 @@ export class UserDashboardComponent implements OnInit {
       next: (response) => {
         if (response && response.user) {
           this.userDetails = response.user;
-          this.user = response.user;  // Set the user object
         }
         this.loading = false;
       },
@@ -86,9 +85,5 @@ export class UserDashboardComponent implements OnInit {
     if (!path) return 'No file uploaded';
     const parts = path.split('/');
     return parts[parts.length - 1];
-  }
-
-  onImageError(event: any): void {
-    event.target.src = 'assets/default-profile.png';
   }
 }
