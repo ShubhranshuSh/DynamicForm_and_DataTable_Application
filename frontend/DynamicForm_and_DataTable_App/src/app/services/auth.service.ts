@@ -36,7 +36,7 @@ interface UserDetails {
   providedIn: 'root'
 })
 export class AuthService {
-  private API_URL = 'http://localhost:5000'; // Adjust to your Flask backend URL
+  private API_URL = 'http://localhost:5000'; 
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated = this.isAuthenticatedSubject.asObservable();
   

@@ -74,7 +74,7 @@ export class EditUserComponent implements OnInit {
         
         // Handle profile picture
         if (data.user.profile_picture) {
-          // If the profile picture is a relative path, prepend the API URL
+        
           if (data.user.profile_picture.startsWith('uploads/')) {
             this.previewUrl = `http://localhost:5000/${data.user.profile_picture}`;
           } else {
@@ -115,9 +115,9 @@ export class EditUserComponent implements OnInit {
       
       this.selectedFile = file;
       this.removeProfilePicFlag = false;
-      this.error = ''; // Clear any previous errors
+      this.error = ''; 
       
-      // Create preview
+      
       const reader = new FileReader();
       reader.onload = () => {
         this.previewUrl = reader.result;
@@ -142,7 +142,7 @@ export class EditUserComponent implements OnInit {
 
   onSubmit(): void {
     if (this.editForm.invalid) {
-      // Mark all fields as touched to trigger validation messages
+      
       Object.keys(this.editForm.controls).forEach(key => {
         const control = this.editForm.get(key);
         control?.markAsTouched();
@@ -153,18 +153,18 @@ export class EditUserComponent implements OnInit {
 
     const formData = new FormData();
     
-    // Add all form fields to FormData
+    
     Object.entries(this.editForm.value).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     });
     
-    // Handle profile picture
+    
     if (this.selectedFile) {
       formData.append('profile_picture', this.selectedFile);
     } else if (this.removeProfilePicFlag) {
-      // If user wants to remove the profile picture
+      
       formData.append('remove_profile_picture', 'true');
     }
 
@@ -176,7 +176,7 @@ export class EditUserComponent implements OnInit {
         this.error = '';
         this.loading = false;
         
-        // Redirect after short delay to show success message
+        
         setTimeout(() => {
           this.router.navigate(['/user', this.userId, 'dashboard']);
         }, 1500);

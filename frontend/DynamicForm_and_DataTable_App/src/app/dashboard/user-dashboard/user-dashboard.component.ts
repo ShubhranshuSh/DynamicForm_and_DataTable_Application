@@ -84,7 +84,7 @@ export class UserDashboardComponent implements OnInit {
   getProfilePictureUrl(profilePicturePath: string | undefined): string {
     if (!profilePicturePath) return 'assets/default-profile.png';
     
-    // Since the backend is already providing the full URL, return it directly
+    
     return profilePicturePath;
   }
 }

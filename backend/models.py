@@ -14,12 +14,11 @@ class User(db.Model, UserMixin):
     address = db.Column(db.String(255))
     height = db.Column(db.String(10))
     weight = db.Column(db.String(10))
-    profile_picture = db.Column(db.String(255))  # Store image filename or URL
+    profile_picture = db.Column(db.String(255))  
     blood_group = db.Column(db.String(3))
     emergency_contact = db.Column(db.String(15), nullable=False)
     allergies = db.Column(db.Text)
     notes = db.Column(db.Text)
-    # Required fields for Flask-Security
     fs_uniquifier = db.Column(db.String(255), unique=True)
     roles = db.relationship('Role', backref='bearers', secondary='user_roles')
     password = db.Column(db.String(255))
