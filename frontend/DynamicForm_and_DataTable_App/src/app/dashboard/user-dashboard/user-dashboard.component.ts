@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { UserNavbarComponent } from '../../user-navbar/user-navbar.component';
+
 
 interface UserDetails {
   id: number;
@@ -25,7 +27,8 @@ interface UserDetails {
   templateUrl: './user-dashboard.component.html',
   styleUrls: ['./user-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule, UserNavbarComponent]
+
 })
 export class UserDashboardComponent implements OnInit {
   userId: number = 0;
