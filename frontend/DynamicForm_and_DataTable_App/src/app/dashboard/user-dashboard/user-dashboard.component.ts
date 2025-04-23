@@ -34,7 +34,7 @@ export class UserDashboardComponent implements OnInit {
   userDetails: UserDetails | null = null;
   loading: boolean = true;
   error: string = '';
-  
+
   constructor(
     private authService: AuthService,
     private route: ActivatedRoute,
@@ -64,6 +64,11 @@ export class UserDashboardComponent implements OnInit {
       next: (response) => {
         if (response && response.user) {
           this.userDetails = response.user;
+          
+          // Fix profile picture URL
+          if (this.userDetails && this.userDetails.profile_picture) {
+            this.userDetails.profile_picture = this.authService.getProfileImageUrl(this.userDetails.profile_picture);
+          }
         }
         this.loading = false;
       },

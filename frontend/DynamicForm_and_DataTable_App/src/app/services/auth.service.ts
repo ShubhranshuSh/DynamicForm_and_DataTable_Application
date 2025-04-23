@@ -39,9 +39,9 @@ export class AuthService {
   private API_URL = 'http://localhost:5000'; // Adjust to your Flask backend URL
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated = this.isAuthenticatedSubject.asObservable();
-  
+
   constructor(private http: HttpClient, private router: Router) {}
-  
+
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, { email, password })
       .pipe(
@@ -56,32 +56,44 @@ export class AuthService {
         })
       );
   }
-  
+
   register(formData: FormData): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.API_URL}/register`, formData);
   }
-  
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.isAuthenticatedSubject.next(false);
     this.router.navigate(['/login']);
   }
-  
+
   getCurrentUser(): any {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   }
-  
+
   getToken(): string | null {
     return localStorage.getItem('token');
   }
-  
+
   getUserDashboard(userId: number): Observable<any> {
     return this.http.get(`${this.API_URL}/user/${userId}/dashboard`);
   }
-  
+
   private hasToken(): boolean {
     return !!localStorage.getItem('token');
+  }
+  
+  // Add this method to get the API URL
+  getApiUrl(): string {
+    return this.API_URL;
+  }
+  
+  // Add this method to get the complete image URL
+  getProfileImageUrl(imagePath: string): string {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${this.API_URL}/${imagePath}`;
   }
 }
