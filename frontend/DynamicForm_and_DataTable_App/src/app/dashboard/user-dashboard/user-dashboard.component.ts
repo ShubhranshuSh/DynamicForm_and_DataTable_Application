@@ -30,7 +30,7 @@ interface UserDetails {
 })
 export class UserDashboardComponent implements OnInit {
   userId: number = 0;
-  userEmail: string = ''; // ✅ ADDED FOR EMAIL DISPLAY
+  userEmail: string = '';
   userDetails: UserDetails | null = null;
   loading: boolean = true;
   error: string = '';
@@ -40,14 +40,14 @@ export class UserDashboardComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {}
-
+  
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
-      this.userEmail = user.email;        // ✅ ADDED TO SHOW EMAIL
-      this.userId = user.id;              // ✅ ADDED TO SET userId
+      this.userEmail = user.email;
+      this.userId = user.id;
     }
-
+    
     this.route.paramMap.subscribe(params => {
       const urlId = parseInt(params.get('id') || '0', 10);
       if (urlId !== this.userId) {
@@ -57,7 +57,7 @@ export class UserDashboardComponent implements OnInit {
       this.loadUserData();
     });
   }
-
+  
   loadUserData(): void {
     this.loading = true;
     this.authService.getUserDashboard(this.userId).subscribe({
@@ -76,14 +76,15 @@ export class UserDashboardComponent implements OnInit {
       }
     });
   }
-
+  
   logout(): void {
     this.authService.logout();
   }
-
-  getFileName(path: string | undefined): string {
-    if (!path) return 'No file uploaded';
-    const parts = path.split('/');
-    return parts[parts.length - 1];
+  
+  getProfilePictureUrl(profilePicturePath: string | undefined): string {
+    if (!profilePicturePath) return 'assets/default-profile.png';
+    
+    // Since the backend is already providing the full URL, return it directly
+    return profilePicturePath;
   }
 }

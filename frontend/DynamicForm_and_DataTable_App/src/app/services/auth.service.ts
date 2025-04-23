@@ -42,6 +42,11 @@ export class AuthService {
   
   constructor(private http: HttpClient, private router: Router) {}
   
+  // Add this method to expose API_URL
+  getApiUrl(): string {
+    return this.API_URL;
+  }
+  
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, { email, password })
       .pipe(

@@ -3,14 +3,12 @@ from functools import wraps
 import os
 import traceback
 import uuid
-from flask import current_app as app, jsonify, request, render_template , abort, send_file, send_from_directory
+from flask import current_app as app, jsonify, request, render_template, abort, send_file, send_from_directory
 from flask_security import auth_required, verify_password, hash_password, login_required, current_user, logout_user, login_user
-from backend.models import  db, User, Role 
+from backend.models import db, User, Role
 from werkzeug.utils import secure_filename
 
-
 datastore = app.security.datastore
-
 
 # Role-based access control
 def admin_required(func):
@@ -21,7 +19,6 @@ def admin_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-
 def user_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -30,65 +27,46 @@ def user_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-
-
-
-# Home route
 @app.route("/")
 def home():
     return "Welcome to the Home Page!"
-
 
 @app.route('/protected')
 @auth_required('token')
 def protected():
     return "This is an authenticated user."
 
-
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    
-    # Ensure the email and password fields are provided
     email = data.get('email')
     password = data.get('password')
 
     if not email or not password:
         return jsonify({"message": "Email and password are required."}), 400
-    
-    # Find the user by email
-    user = User.query.filter_by(email=email).first()  # Make sure you're querying the right database
+
+    user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "Invalid email"}), 404  # Changed to match the provided logic
+        return jsonify({"message": "Invalid email"}), 404
 
-    # Check if the password matches
-    if verify_password(password, user.password):  # Ensure verify_password checks against hashed password
-        # Generate token (this assumes you have a `get_auth_token` method for JWT generation)
+    if verify_password(password, user.password):
         token = user.get_auth_token()
-
-        # Serialize roles as a list of role names
         role_names = [role.name for role in user.roles]
-        
         return jsonify({
             'token': token,
             'email': user.email,
-            'role': role_names,  # List of role names instead of a single role
+            'role': role_names,
             'id': user.id
-        }), 200  # Successfully logged in
-        
+        }), 200
     else:
-        return jsonify({"message": "Invalid password"}), 401  # Incorrect password
-    
+        return jsonify({"message": "Invalid password"}), 401
 
-
-UPLOAD_FOLDER = 'uploads/profile_pics'
+UPLOAD_FOLDER = os.path.join('uploads', 'profile_pics')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 
-# Function to check if the file is an allowed image type
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -111,16 +89,15 @@ def register():
     profile_picture = request.files.get('profile_picture')
     if profile_picture and allowed_file(profile_picture.filename):
         picture_filename = secure_filename(profile_picture.filename)
-        picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
-        profile_picture.save(picture_path)
+        save_path = os.path.join(UPLOAD_FOLDER, picture_filename)
+        profile_picture.save(save_path)
+        picture_path = os.path.normpath(f"profile_pics/{picture_filename}").replace("\\", "/")
     else:
         picture_path = None
 
-    # Basic field check
     if not all([name, email, password, uid, phone, emergency_contact]):
         return jsonify({"message": "Required fields: name, email, password, uid, phone, emergency_contact."}), 400
 
-    # Validation logic
     if not phone.isdigit() or len(phone) != 10:
         return jsonify({"message": "Phone number must be exactly 10 digits."}), 400
     if not uid.isdigit() or len(uid) != 11:
@@ -131,7 +108,6 @@ def register():
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"message": "Invalid email format."}), 400
 
-    # Check duplicates
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "User with this email already exists."}), 409
     if User.query.filter_by(uid=uid).first():
@@ -168,38 +144,50 @@ def register():
 
     return jsonify({"message": "User registered successfully."}), 201
 
+@app.route('/uploads/profile_pics/<filename>')
+def serve_profile_pic(filename):
+    try:
+        return send_from_directory(UPLOAD_FOLDER, filename)
+    except FileNotFoundError:
+        return jsonify({"message": "Profile picture not found."}), 404
+
 @app.route('/user/<int:user_id>/dashboard', methods=['GET'])
 @auth_required('token')
 @user_required
-def user_dashboard(user_id):
-    # Ensure current user can only access their own dashboard
-    if current_user.id != user_id:
-        return jsonify({"message": "Unauthorized access."}), 403
+def get_user_dashboard(user_id):
+    user = User.query.get_or_404(user_id)
+    profile_picture_url = None
+    if user.profile_picture:
+        normalized_path = user.profile_picture.replace("\\", "/")
+        if normalized_path.startswith("uploads/"):
+            profile_picture_url = f"{request.host_url}{normalized_path}"
+        else:
+            profile_picture_url = f"{request.host_url}uploads/{normalized_path}"
 
-    user_data = {
-        "id": current_user.id,
-        "name": current_user.name,
-        "email": current_user.email,
-        "uid": current_user.uid,
-        "phone": current_user.phone,
-        "address": current_user.address,
-        "height": current_user.height,
-        "weight": current_user.weight,
-        "blood_group": current_user.blood_group,
-        "emergency_contact": current_user.emergency_contact,
-        "allergies": current_user.allergies,
-        "notes": current_user.notes,
-        "profile_picture": current_user.profile_picture,
-        "roles": [role.name for role in current_user.roles]
-    }
+    return jsonify({
+        'user': {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'uid': user.uid,
+            'phone': user.phone,
+            'address': user.address,
+            'height': user.height,
+            'weight': user.weight,
+            'blood_group': user.blood_group,
+            'emergency_contact': user.emergency_contact,
+            'allergies': user.allergies,
+            'notes': user.notes,
+            'profile_picture': profile_picture_url,
+            'roles': [role.name for role in user.roles],
+        }
+    })
 
-    return jsonify({"message": "Dashboard data fetched successfully.", "user": user_data}), 200
 
 @app.route('/user/<int:user_id>/dashboard/edit', methods=['POST'])
 @auth_required('token')
 @user_required
 def edit_user_profile(user_id):
-    # Ensure the current user is editing their own profile
     if current_user.id != user_id:
         return jsonify({"message": "Unauthorized access."}), 403
 
@@ -219,16 +207,15 @@ def edit_user_profile(user_id):
     profile_picture = request.files.get('profile_picture')
     if profile_picture and allowed_file(profile_picture.filename):
         picture_filename = secure_filename(profile_picture.filename)
-        picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
-        profile_picture.save(picture_path)
+        save_path = os.path.join(UPLOAD_FOLDER, picture_filename)
+        profile_picture.save(save_path)
+        picture_path = os.path.normpath(f"profile_pics/{picture_filename}").replace("\\", "/")
     else:
-        picture_path = current_user.profile_picture  # Keep existing if no new valid image
+        picture_path = current_user.profile_picture
 
-    # Validate required fields
     if not all([name, email, uid, phone, emergency_contact]):
         return jsonify({"message": "Required fields cannot be empty."}), 400
 
-    # Validation logic
     if not phone.isdigit() or len(phone) != 10:
         return jsonify({"message": "Phone number must be exactly 10 digits."}), 400
     if not uid.isdigit() or len(uid) != 11:
@@ -239,7 +226,6 @@ def edit_user_profile(user_id):
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"message": "Invalid email format."}), 400
 
-    # Prevent email/UID clashes with other users
     existing_email = User.query.filter(User.email == email, User.id != user_id).first()
     if existing_email:
         return jsonify({"message": "Email already in use by another user."}), 409
@@ -248,7 +234,6 @@ def edit_user_profile(user_id):
     if existing_uid:
         return jsonify({"message": "UID already in use by another user."}), 409
 
-    # Update user fields
     current_user.name = name
     current_user.email = email
     current_user.uid = uid
