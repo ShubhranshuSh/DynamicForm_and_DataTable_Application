@@ -4,6 +4,7 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { UserDashboardComponent } from './dashboard/user-dashboard/user-dashboard.component';
 import { authGuard } from './guards/auth.guard';
+import { EditUserComponent } from './dashboard/edit-user/edit-user.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -19,4 +20,5 @@ export const routes: Routes = [
     path: 'dashboard', 
     redirectTo: 'user/0/dashboard'  // Will be replaced with actual ID in guard
   },
+  { path: 'user/:user_id/dashboard/edit', component: EditUserComponent },
 ];
