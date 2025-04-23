@@ -3,9 +3,16 @@
       {
         "source": "/api/(.*)",
         "destination": "https://medicdata-store.onrender.com/api/$1"
+      },
+      {
+        "source": "/uploads/(.*)",
+        "destination": "https://medicdata-store.onrender.com/uploads/$1"
+      },
+      {
+        "source": "/(.*)",
+        "destination": "frontend/DynamicForm_and_DataTable_App/src/index.html"
       }
     ],
-    "redirects": [],
     "headers": [
       {
         "source": "/(.*)",
@@ -19,4 +26,5 @@
     ],
     "cleanUrls": true
   }
+  
   
