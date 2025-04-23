@@ -3,10 +3,20 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { UserDashboardComponent } from './dashboard/user-dashboard/user-dashboard.component';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'dashboard', component: UserDashboardComponent },
+  { 
+    path: 'user/:id/dashboard', 
+    component: UserDashboardComponent, 
+    canActivate: [authGuard]
+  },
+  // Redirect old dashboard URL to prevent issues
+  { 
+    path: 'dashboard', 
+    redirectTo: 'user/0/dashboard'  // Will be replaced with actual ID in guard
+  },
 ];

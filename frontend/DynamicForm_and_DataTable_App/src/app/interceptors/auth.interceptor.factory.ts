@@ -7,8 +7,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.getToken();
   
   if (token) {
+    // Use 'Authentication-Token' instead of 'Authorization: Bearer' to match Flask-Security's requirements
     const authReq = req.clone({
-      headers: req.headers.set('Authorization', `Bearer ${token}`)
+      headers: req.headers.set('Authentication-Token', token)
     });
     return next(authReq);
   }

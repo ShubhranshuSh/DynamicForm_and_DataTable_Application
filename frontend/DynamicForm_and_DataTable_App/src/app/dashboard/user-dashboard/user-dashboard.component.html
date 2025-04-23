@@ -1,11 +1,110 @@
-<app-navbar></app-navbar>
-<div class="min-h-screen flex items-center justify-center bg-white px-4 py-12">
-  <div class="max-w-md w-full space-y-8">
-    <h2 class="text-center text-3xl font-extrabold text-gray-900">User Dashboard</h2>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <p class="text-lg text-gray-700">Welcome, {{ userEmail }}!</p>
-      <p class="mt-4 text-md text-gray-600">This is your personal dashboard.</p>
-      <button (click)="logout()" class="mt-6 w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+    <div class="p-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">User Dashboard</h1>
+        <p class="text-sm text-gray-500 mb-6">Your personal medical information</p>
+      </div>
+
+      <div *ngIf="loading" class="flex justify-center items-center py-10">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+
+      <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        {{ error }}
+      </div>
+
+      <div *ngIf="!loading && !error && userDetails" class="space-y-6">
+        <!-- Profile Picture -->
+        <div class="flex justify-center mb-6" *ngIf="userDetails.profile_picture">
+          <div class="w-32 h-32 bg-gray-200 rounded-full overflow-hidden">
+            <img [src]="userDetails.profile_picture" alt="Profile" class="w-full h-full object-cover" 
+                 onerror="this.src='assets/default-profile.png'; this.onerror='';">
+          </div>
+        </div>
+        
+        <!-- Basic Information -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-3">Basic Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Name</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.name }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Email</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.email }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">UID</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.uid }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Phone</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.phone }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Medical Information -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-3">Medical Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Height</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.height || 'Not provided' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Weight</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.weight || 'Not provided' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Blood Group</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.blood_group || 'Not provided' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500">Emergency Contact</span>
+              <span class="text-gray-800 font-medium">{{ userDetails.emergency_contact }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Additional Information -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-3">Additional Information</h2>
+          
+          <div class="mb-4">
+            <span class="text-sm text-gray-500">Address</span>
+            <p class="text-gray-800 font-medium">{{ userDetails.address || 'Not provided' }}</p>
+          </div>
+          
+          <div class="mb-4">
+            <span class="text-sm text-gray-500">Allergies</span>
+            <p class="text-gray-800 font-medium whitespace-pre-line">{{ userDetails.allergies || 'None reported' }}</p>
+          </div>
+          
+          <div>
+            <span class="text-sm text-gray-500">Notes</span>
+            <p class="text-gray-800 font-medium whitespace-pre-line">{{ userDetails.notes || 'No additional notes' }}</p>
+          </div>
+        </div>
+        
+        <!-- Roles Information -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">Account Type</h2>
+          <div class="flex gap-2 flex-wrap">
+            <span *ngFor="let role of userDetails.roles" 
+                  class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
+              {{ role }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Logout Button at the bottom -->
+      <button 
+        (click)="logout()" 
+        class="mt-8 w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
         Logout
       </button>
     </div>

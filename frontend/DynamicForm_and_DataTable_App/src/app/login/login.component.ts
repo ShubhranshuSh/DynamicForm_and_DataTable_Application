@@ -16,13 +16,13 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   errorMessage: string = '';
   loading: boolean = false;
-
+  
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
     private router: Router
   ) {}
-
+  
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -30,27 +30,29 @@ export class LoginComponent implements OnInit {
     });
     
     // Check if user is already logged in
-    if (this.authService.getCurrentUser()) {
-      this.router.navigate(['/dashboard']);
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.router.navigate([`/user/${user.id}/dashboard`]);
     }
   }
-
+  
   get email() { return this.loginForm.get('email'); }
   get password() { return this.loginForm.get('password'); }
-
+  
   onSubmit(): void {
     if (this.loginForm.invalid) {
       return;
     }
-
+    
     this.loading = true;
     this.errorMessage = '';
     const { email, password } = this.loginForm.value;
-
+    
     this.authService.login(email, password).subscribe({
       next: (response) => {
         console.log('Login successful:', response);
-        this.router.navigate(['/dashboard']);
+        // Navigate to user-specific dashboard
+        this.router.navigate([`/user/${response.id}/dashboard`]);
       },
       error: (error) => {
         console.error('Login error:', error);

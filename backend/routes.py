@@ -44,10 +44,6 @@ def home():
 def protected():
     return "This is an authenticated user."
 
-from flask import request, jsonify
-from flask_security import current_user
-from backend.models import db, User
-from flask_security.utils import verify_password
 
 @app.route('/login', methods=['POST'])
 def login():
