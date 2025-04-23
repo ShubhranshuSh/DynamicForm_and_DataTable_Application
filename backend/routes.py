@@ -194,3 +194,77 @@ def user_dashboard(user_id):
     }
 
     return jsonify({"message": "Dashboard data fetched successfully.", "user": user_data}), 200
+
+@app.route('/user/<int:user_id>/dashboard/edit', methods=['POST'])
+@auth_required('token')
+@user_required
+def edit_user_profile(user_id):
+    # Ensure the current user is editing their own profile
+    if current_user.id != user_id:
+        return jsonify({"message": "Unauthorized access."}), 403
+
+    data = request.form
+    name = data.get('name')
+    email = data.get('email')
+    uid = data.get('uid')
+    phone = data.get('phone')
+    address = data.get('address')
+    height = data.get('height')
+    weight = data.get('weight')
+    blood_group = data.get('blood_group')
+    emergency_contact = data.get('emergency_contact')
+    allergies = data.get('allergies')
+    notes = data.get('notes')
+
+    profile_picture = request.files.get('profile_picture')
+    if profile_picture and allowed_file(profile_picture.filename):
+        picture_filename = secure_filename(profile_picture.filename)
+        picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
+        profile_picture.save(picture_path)
+    else:
+        picture_path = current_user.profile_picture  # Keep existing if no new valid image
+
+    # Validate required fields
+    if not all([name, email, uid, phone, emergency_contact]):
+        return jsonify({"message": "Required fields cannot be empty."}), 400
+
+    # Validation logic
+    if not phone.isdigit() or len(phone) != 10:
+        return jsonify({"message": "Phone number must be exactly 10 digits."}), 400
+    if not uid.isdigit() or len(uid) != 11:
+        return jsonify({"message": "UID must be exactly 11 digits."}), 400
+    if not emergency_contact.isdigit() or len(emergency_contact) != 10:
+        return jsonify({"message": "Emergency contact must be exactly 10 digits."}), 400
+    import re
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({"message": "Invalid email format."}), 400
+
+    # Prevent email/UID clashes with other users
+    existing_email = User.query.filter(User.email == email, User.id != user_id).first()
+    if existing_email:
+        return jsonify({"message": "Email already in use by another user."}), 409
+
+    existing_uid = User.query.filter(User.uid == uid, User.id != user_id).first()
+    if existing_uid:
+        return jsonify({"message": "UID already in use by another user."}), 409
+
+    # Update user fields
+    current_user.name = name
+    current_user.email = email
+    current_user.uid = uid
+    current_user.phone = phone
+    current_user.address = address
+    current_user.height = height
+    current_user.weight = weight
+    current_user.blood_group = blood_group
+    current_user.emergency_contact = emergency_contact
+    current_user.allergies = allergies
+    current_user.notes = notes
+    current_user.profile_picture = picture_path
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Profile updated successfully."}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error updating profile: {str(e)}"}), 500
