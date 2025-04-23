@@ -85,15 +85,31 @@ export class AuthService {
     return !!localStorage.getItem('token');
   }
   
-  // Add this method to get the API URL
   getApiUrl(): string {
     return this.API_URL;
   }
   
-  // Add this method to get the complete image URL
   getProfileImageUrl(imagePath: string): string {
     if (!imagePath) return '';
+    
+    // If it's already a full URL, return it
     if (imagePath.startsWith('http')) return imagePath;
-    return `${this.API_URL}/${imagePath}`;
+    
+    // Handle paths that might include uploads/profile_pics
+    if (imagePath.includes('uploads/profile_pics/')) {
+      // Already contains the full path, we just need to prepend API URL
+      return `${this.API_URL}/${imagePath}`;
+    }
+    
+    // Handle paths that include just directories without 'uploads/profile_pics'
+    if (imagePath.includes('/')) {
+      // Extract filename from path
+      const parts = imagePath.split('/');
+      const filename = parts[parts.length - 1];
+      return `${this.API_URL}/uploads/profile_pics/${filename}`;
+    }
+    
+    // It's just a filename
+    return `${this.API_URL}/uploads/profile_pics/${imagePath}`;
   }
 }

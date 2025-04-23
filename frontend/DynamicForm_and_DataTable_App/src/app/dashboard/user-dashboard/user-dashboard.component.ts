@@ -30,13 +30,14 @@ interface UserDetails {
 })
 export class UserDashboardComponent implements OnInit {
   userId: number = 0;
-  userEmail: string = ''; // ✅ ADDED FOR EMAIL DISPLAY
+  userEmail: string = '';
   userDetails: UserDetails | null = null;
   loading: boolean = true;
   error: string = '';
+  user: any = null;
 
   constructor(
-    private authService: AuthService,
+    public authService: AuthService,  // Changed to public for template access
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -44,10 +45,9 @@ export class UserDashboardComponent implements OnInit {
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
-      this.userEmail = user.email;        // ✅ ADDED TO SHOW EMAIL
-      this.userId = user.id;              // ✅ ADDED TO SET userId
+      this.userEmail = user.email;
+      this.userId = user.id;
     }
-
     this.route.paramMap.subscribe(params => {
       const urlId = parseInt(params.get('id') || '0', 10);
       if (urlId !== this.userId) {
@@ -64,11 +64,7 @@ export class UserDashboardComponent implements OnInit {
       next: (response) => {
         if (response && response.user) {
           this.userDetails = response.user;
-          
-          // Fix profile picture URL
-          if (this.userDetails && this.userDetails.profile_picture) {
-            this.userDetails.profile_picture = this.authService.getProfileImageUrl(this.userDetails.profile_picture);
-          }
+          this.user = response.user;  // Set the user object
         }
         this.loading = false;
       },
@@ -90,5 +86,9 @@ export class UserDashboardComponent implements OnInit {
     if (!path) return 'No file uploaded';
     const parts = path.split('/');
     return parts[parts.length - 1];
+  }
+
+  onImageError(event: any): void {
+    event.target.src = 'assets/default-profile.png';
   }
 }

@@ -3,14 +3,12 @@ from functools import wraps
 import os
 import traceback
 import uuid
-from flask import current_app as app, jsonify, request, render_template , abort, send_file, send_from_directory
+from flask import current_app as app, jsonify, request, render_template, abort, send_file, send_from_directory
 from flask_security import auth_required, verify_password, hash_password, login_required, current_user, logout_user, login_user
-from backend.models import  db, User, Role 
+from backend.models import db, User, Role
 from werkzeug.utils import secure_filename
 
-
 datastore = app.security.datastore
-
 
 # Role-based access control
 def admin_required(func):
@@ -21,7 +19,6 @@ def admin_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-
 def user_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -30,20 +27,15 @@ def user_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-
-
-
 # Home route
 @app.route("/")
 def home():
     return "Welcome to the Home Page!"
 
-
 @app.route('/protected')
 @auth_required('token')
 def protected():
     return "This is an authenticated user."
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -52,7 +44,6 @@ def login():
     # Ensure the email and password fields are provided
     email = data.get('email')
     password = data.get('password')
-
     if not email or not password:
         return jsonify({"message": "Email and password are required."}), 400
     
@@ -60,12 +51,10 @@ def login():
     user = User.query.filter_by(email=email).first()  # Make sure you're querying the right database
     if not user:
         return jsonify({"message": "Invalid email"}), 404  # Changed to match the provided logic
-
     # Check if the password matches
     if verify_password(password, user.password):  # Ensure verify_password checks against hashed password
         # Generate token (this assumes you have a `get_auth_token` method for JWT generation)
         token = user.get_auth_token()
-
         # Serialize roles as a list of role names
         role_names = [role.name for role in user.roles]
         
@@ -78,8 +67,6 @@ def login():
         
     else:
         return jsonify({"message": "Invalid password"}), 401  # Incorrect password
-    
-
 
 UPLOAD_FOLDER = 'uploads/profile_pics'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
@@ -91,6 +78,11 @@ def allowed_file(filename):
 # Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+# Add route to serve profile pictures
+@app.route('/uploads/profile_pics/<filename>')
+def serve_profile_picture(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -107,8 +99,8 @@ def register():
     emergency_contact = data.get('emergency_contact')
     allergies = data.get('allergies')
     notes = data.get('notes')
-
     profile_picture = request.files.get('profile_picture')
+
     if profile_picture and allowed_file(profile_picture.filename):
         picture_filename = secure_filename(profile_picture.filename)
         picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
@@ -127,6 +119,7 @@ def register():
         return jsonify({"message": "UID must be exactly 11 digits."}), 400
     if not emergency_contact.isdigit() or len(emergency_contact) != 10:
         return jsonify({"message": "Emergency contact must be exactly 10 digits."}), 400
+
     import re
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"message": "Invalid email format."}), 400
@@ -215,14 +208,19 @@ def edit_user_profile(user_id):
     emergency_contact = data.get('emergency_contact')
     allergies = data.get('allergies')
     notes = data.get('notes')
-
     profile_picture = request.files.get('profile_picture')
+
     if profile_picture and allowed_file(profile_picture.filename):
         picture_filename = secure_filename(profile_picture.filename)
         picture_path = os.path.join(UPLOAD_FOLDER, picture_filename)
         profile_picture.save(picture_path)
     else:
         picture_path = current_user.profile_picture  # Keep existing if no new valid image
+
+    # Handle profile picture removal if requested
+    remove_profile_picture = data.get('remove_profile_picture')
+    if remove_profile_picture == 'true':
+        picture_path = None
 
     # Validate required fields
     if not all([name, email, uid, phone, emergency_contact]):
@@ -235,6 +233,7 @@ def edit_user_profile(user_id):
         return jsonify({"message": "UID must be exactly 11 digits."}), 400
     if not emergency_contact.isdigit() or len(emergency_contact) != 10:
         return jsonify({"message": "Emergency contact must be exactly 10 digits."}), 400
+
     import re
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"message": "Invalid email format."}), 400
@@ -248,7 +247,7 @@ def edit_user_profile(user_id):
     if existing_uid:
         return jsonify({"message": "UID already in use by another user."}), 409
 
-    # Update user fields
+    # Update user
     current_user.name = name
     current_user.email = email
     current_user.uid = uid
@@ -262,9 +261,6 @@ def edit_user_profile(user_id):
     current_user.notes = notes
     current_user.profile_picture = picture_path
 
-    try:
-        db.session.commit()
-        return jsonify({"message": "Profile updated successfully."}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"message": f"Error updating profile: {str(e)}"}), 500
+    db.session.commit()
+
+    return jsonify({"message": "Profile updated successfully."}), 200
