@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-edit-user',
@@ -16,6 +17,8 @@ export class EditUserComponent implements OnInit {
   userId!: number;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
+  originalProfilePicture: string | null = null;
+  removeProfilePicFlag = false;
   error: string = '';
   success: string = '';
   loading: boolean = false;
@@ -24,7 +27,8 @@ export class EditUserComponent implements OnInit {
     private fb: FormBuilder,
     private http: HttpClient,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -45,32 +49,40 @@ export class EditUserComponent implements OnInit {
       blood_group: [''],
       emergency_contact: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       allergies: [''],
-      notes: [''],
-      profile_picture: ['']
+      notes: ['']
     });
   }
 
   fetchUserData(): void {
     this.loading = true;
-    this.http.get<any>(`http://127.0.0.1:5000/user/${this.userId}/dashboard`).subscribe({
+    this.authService.getUserDashboard(this.userId).subscribe({
       next: (data) => {
+        // Populate form with user data
         this.editForm.patchValue({
-          name: data.name,
-          email: data.email,
-          uid: data.uid,
-          phone: data.phone,
-          address: data.address || '',
-          height: data.height || '',
-          weight: data.weight || '',
-          blood_group: data.blood_group || '',
-          emergency_contact: data.emergency_contact,
-          allergies: data.allergies || '',
-          notes: data.notes || ''
+          name: data.user.name,
+          email: data.user.email,
+          uid: data.user.uid,
+          phone: data.user.phone,
+          address: data.user.address || '',
+          height: data.user.height || '',
+          weight: data.user.weight || '',
+          blood_group: data.user.blood_group || '',
+          emergency_contact: data.user.emergency_contact,
+          allergies: data.user.allergies || '',
+          notes: data.user.notes || ''
         });
         
-        if (data.profile_picture) {
-          this.previewUrl = data.profile_picture;
+        // Handle profile picture
+        if (data.user.profile_picture) {
+          // If the profile picture is a relative path, prepend the API URL
+          if (data.user.profile_picture.startsWith('uploads/')) {
+            this.previewUrl = `http://localhost:5000/${data.user.profile_picture}`;
+          } else {
+            this.previewUrl = data.user.profile_picture;
+          }
+          this.originalProfilePicture = data.user.profile_picture;
         }
+        
         this.loading = false;
       },
       error: (error) => {
@@ -79,6 +91,10 @@ export class EditUserComponent implements OnInit {
         console.error('Error fetching user data:', error);
       }
     });
+  }
+
+  triggerFileInput(): void {
+    document.getElementById('profile-picture-upload')?.click();
   }
 
   onFileSelected(event: any): void {
@@ -98,6 +114,7 @@ export class EditUserComponent implements OnInit {
       }
       
       this.selectedFile = file;
+      this.removeProfilePicFlag = false;
       this.error = ''; // Clear any previous errors
       
       // Create preview
@@ -107,6 +124,16 @@ export class EditUserComponent implements OnInit {
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  removeProfilePicture(): void {
+    this.previewUrl = null;
+    this.selectedFile = null;
+    this.removeProfilePicFlag = true;
+  }
+
+  clearField(fieldName: string): void {
+    this.editForm.get(fieldName)?.setValue('');
   }
 
   onImageError(event: any): void {
@@ -125,24 +152,30 @@ export class EditUserComponent implements OnInit {
     }
 
     const formData = new FormData();
+    
     // Add all form fields to FormData
     Object.entries(this.editForm.value).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && key !== 'profile_picture') {
+      if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     });
-
-    // Add profile picture if selected
+    
+    // Handle profile picture
     if (this.selectedFile) {
       formData.append('profile_picture', this.selectedFile);
+    } else if (this.removeProfilePicFlag) {
+      // If user wants to remove the profile picture
+      formData.append('remove_profile_picture', 'true');
     }
 
     this.loading = true;
-    this.http.post<any>(`http://127.0.0.1:5000/user/${this.userId}/dashboard/edit`, formData).subscribe({
+    
+    this.http.post<any>(`http://localhost:5000/user/${this.userId}/dashboard/edit`, formData).subscribe({
       next: (response) => {
         this.success = 'Profile updated successfully!';
         this.error = '';
         this.loading = false;
+        
         // Redirect after short delay to show success message
         setTimeout(() => {
           this.router.navigate(['/user', this.userId, 'dashboard']);
